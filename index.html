@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>AI Pricing Dashboard</title>
+<style>
+body {
+  background:#0f0f0f;
+  color:white;
+  font-family:Arial;
+  padding:20px;
+}
+.container {
+  max-width:900px;
+  margin:auto;
+}
+.card {
+  background:#1c1c1c;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+input {
+  padding:10px;
+  margin:5px;
+  border-radius:8px;
+  border:none;
+}
+button {
+  padding:10px 15px;
+  background:#6c5ce7;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.product {
+  background:#111;
+  padding:10px;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🤖 AI Pricing Dashboard</h2>
+
+<div class="card">
+  <input id="name" placeholder="اسم المنتج">
+  <input id="cost" type="number" placeholder="سعر الشراء">
+  <input id="comp1" type="number" placeholder="سعر منافس 1">
+  <input id="comp2" type="number" placeholder="سعر منافس 2">
+  <input id="fees" type="number" placeholder="عمولة %">
+  <button onclick="addProduct()">➕ إضافة المنتج</button>
+</div>
+
+<div class="card">
+  <button onclick="autoPricing()">⚡ تشغيل Auto Pricing لكل المنتجات</button>
+</div>
+
+<div id="products"></div>
+
+</div>
+
+<script>
+let products = [];
+
+function smartPrice(p) {
+  let cost = p.cost;
+  let fees = p.fees || 0;
+
+  // 🧠 AI Margin حسب السعر
+  let margin;
+  if (cost < 1000) margin = 0.07;
+  else if (cost < 5000) margin = 0.05;
+  else margin = 0.03;
+
+  let base = cost * (1 + margin);
+
+  // 📊 تحليل المنافسين
+  let avgComp = (p.comp1 + p.comp2) / 2 || base;
+
+  // 🎯 السعر النهائي (بينك وبين المنافس)
+  let target = (base + avgComp) / 2;
+
+  // 🎁 خصم ذكي
+  let discount = 5;
+  let beforeDiscount = target / (1 - discount/100);
+
+  // 🧠 تسعير نفسي
+  let final = Math.floor(beforeDiscount / 10) * 10 - 1;
+
+  // 💰 الربح
+  let profit = (final * (1 - discount/100) * (1 - fees/100)) - cost;
+  let percent = (profit / cost) * 100;
+
+  return {
+    final,
+    discount,
+    profit: profit.toFixed(2),
+    percent: percent.toFixed(2)
+  };
+}
+
+function addProduct() {
+  let product = {
+    name: name.value,
+    cost: parseFloat(cost.value),
+    comp1: parseFloat(comp1.value) || 0,
+    comp2: parseFloat(comp2.value) || 0,
+    fees: parseFloat(fees.value) || 0
+  };
+
+  products.push(product);
+  render();
+}
+
+function autoPricing() {
+  products = products.map(p => {
+    let result = smartPrice(p);
+    return {...p, ...result};
+  });
+  render();
+}
+
+function render() {
+  productsDiv.innerHTML = "";
+
+  products.forEach((p, i) => {
+    let result = p.final ? p : smartPrice(p);
+
+    productsDiv.innerHTML += `
+      <div class="product">
+        <b>${p.name}</b><br>
+        💰 سعر الشراء: ${p.cost}<br>
+        💡 السعر المقترح: <b>${result.final}</b><br>
+        🏷️ خصم: ${result.discount}%<br>
+        💵 الربح: ${result.profit}<br>
+        📊 نسبة الربح: ${result.percent}%<br>
+        <button onclick="deleteProduct(${i})">❌ حذف</button>
+      </div>
+    `;
+  });
+}
+
+function deleteProduct(i) {
+  products.splice(i,1);
+  render();
+}
+</script>
+
+</body>
+</html>
